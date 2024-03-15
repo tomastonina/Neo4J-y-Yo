@@ -1,0 +1,8 @@
+#Nodos:
+#Etiquetas: 
+- Personas
+- Productos
+- FabricantesDeProductos
+
+#Relaciones: 
+- Algunos Nodos Personas se pueden conocer entre ellos

@@ -1,0 +1,174 @@
+##### Que es una DB de Grafos? #####
+	• Una base de datos que utiliza estructuras de grafos con nodos, arcos (relaciones) y propiedades para
+	  representar y almacenar información.
+	  
+	• Las bases de datos de grafos nos permiten almacenar entidades y relaciones sobre esas entidades
+	
+	• La organización del Grafo permite que los datos sean almacenados una vez y luego interpretados de
+	  distintas maneras basándonos en sus relaciones.
+	
+	
+##### Componentes de un Grafo en Neo4J #####
+	• Nodos: Serian las entidades (Si no tienen Etiquetas estan vacias)
+	• Etiquetas/Labels: Seria lo que representa el nodo
+	• Relaciones/Arcos: Son las relaciones entre las entidades, pueden ser multiples y tener propiedades
+	• Tipos: Cumple la misma funcion de las etiquetas pero para representar a las relaciones
+	• Propiedades: Serian ya las caracteristicas de cada uno de los nodos y/o relaciones y no tienen que ser las mismas en cada uno, o sea no tiene que ser estructurado
+	
+Por ejemplo tengo 3 nodos:
+- Al no tener etiquetas no tienen a nada a que representar
+- Agrego 2 etiquetas con el nombre: Persona y Banco
+- Puedo poner cualquiera de las etiquetas en cualquier nodo, en este caso 2 de los nodos son Persona y el restante Banco
+- Agrego 3 relaciones y 3 tipos: Usa, visita y amistad: 
+	• El nodo 1 persona se relaciona con el nodo 3 banco, tiene la relacion de "USA" (O sea que utiliza el banco)
+	• El nodo 2 persona se relaciona con el nodo 3 banco, tiene la relacion de "VISITA" (Visita el banco)
+	• El nodo 1 y 2 tienen la relacion de "AMISTAD"
+- En este caso agrego 2 relaciones mas pero que tienen el mismo tipo:
+	• Se agregan las relaciones "VIVE CON" que ambos nodos 1 y 2 comparten.
+- Ahora las propiedades:
+	• Nodo 1: Nombre: "Tomas"
+			  Apellido: "Toto"
+			  Mail: "Toto@totos.com"
+	• Nodo 2: Nombre: "Locos"
+			  Telefono: 4324
+	• Nodo 3: Nombre: "Santander"
+			  Direccion: "Av. siempreviva"
+
+Tengo en total:
+- 3 Nodos
+- 2 Etiquetas
+- 5 Relaciones
+- 4 Tipos de relaciones
+- 7 Propiedades
+
+
+##### Neo4J también cuenta con el lenguaje de consulta Cypher para recorrer grafos. #####
+	• Cypher usa las keywords MATCH para búsqueda de patrones en relaciones, WHERE para filtrar propiedades 
+	  en un nodo o relación, y RETURN para especificar qué retorna una consulta.
+	  
+	• Cypher también provee métodos para operar los datos tales como ORDER, AGGREGATE, SKIP, LIMIT, entre otros
+	
+-Neo4J Ademas permite realizar las mismas tareas que con el lenguaje de consulta cypher utilizando "bindings" con diferentes lenguajes de progrmacion
+(Java/.NET/JavaScript/Ruby/Python/PHP/R/)
+
+
+##### Creaciones de nodos y relaciones con etiquetas, tipos y propiedades: #####
+
+••• Nodos:
+CREATE (n:Etiqueta {Propiedad: {valor}})
+
+-CREATE: Palabra reservada a la hora de crear un Nodo/relacion
+-n: Es un alias, se puede utilizar cualquier palabra/letra pero es una forma de referenciar a lo que estamos creando
+-Propiedad: Las propiedades que le pongo al Nodo/relacion que estoy creando
+
+-Ejemplo:
+CREATE (p:Persona {nombre: "Tomas", apellido: "Toto", email: "toto@gmail.com"})
+CREATE (p:Persona {nombre: "Jesus", apellido: "Nazareth", email: "jesusnumero1@gmail.com", telefono: 123, edad: 23})
+
+••• Relaciones:
+
+Si los nodos que quiero relacion ya estan creados, entonces SI O SI tengo que usar la sentencia MATCH para encontrarlos y crearles esa relacion
+
+CREATE (n)-[r:TIPO]->(m)
+CREATE (n)-[:TIPO {propiedad: {valor}}]->(m)
+
+-(n): El nodo que manda la relacion
+-r: El tipo/Etiqueta de la relacion
+-propiedad: Se le puede agregar una propiedad al tipo/etiqueta de la relacion
+- ->(m): El nodo que va a recibir la relacion
+
+-Ejemplo:
+MATCH (nodo1: Persona {nombre: "Tomas", apellido: "Toto", email: "toto@gmail.com"}), (nodo2: Persona {nombre: "Jesus", apellido: "Nazareth", email: "jesusnumero1@gmail.com", telefono: 123})
+CREATE (nodo1)-[relacion1: SON_AMIGOS {amistad: "8 anios"}]->(nodo2)
+RETURN nodo1, relacion1, nodo2
+
+
+IMPORTANTE: Si quiero crear una relacion que se cree solo una vez tengo que usar la sintaxis CREATE UNIQUE. Esto hace que si ya existe la relacion, no la cree.
+Ejemplo:
+
+MATCH (nodo1: Persona {nombre: "Tomas", apellido: "Toto", email: "toto@gmail.com"}), (nodo2: Persona {nombre: "Jesus", apellido: "Nazareth", email: "jesusnumero1@gmail.com", telefono: 123})
+CREATE UNIQUE (nodo1)-[relacion1: SON_AMIGOS {amistad: "8 anios"}]->(nodo2)
+RETURN nodo1, relacion1, nodo2
+
+##### Consultas entre nodos y relaciones #####
+
+MATCH(nodo1: Persona {email: "toto@gmail.com"})-[relacion1: SON_AMIGOS {amistad: "8 anios"}]->(nodo2)
+RETURN nodo1, relacion1, nodo2
+
+
+##### Eliminar por completo nodos y relaciones #####
+
+MATCH (n:Etiqueta { propiedades } )-[r:Relacion {propiedades}]-()
+DELETE n,r
+
+Ejemplo:
+
+MATCH (nodo1: Persona {nombre: "Tomas", apellido: "Toto", email: "toto@gmail.com"})-[relacion1: SON_AMIGOS {amistad: "8 anios"}]-()
+DELETE nodo1, relacion1
+
+
+MATCH (nodo2: Persona {nombre: "Jesus", apellido: "Nazareth", email: "jesusnumero1@gmail.com", telefono: 123})
+DELETE nodo2
+
+
+
+##### Modificar, agregar y eliminar etiquetas, tipos y propiedades de nodos y relaciones #####
+
+CREATE (p:Persona {nombre: "Tomas", apellido: "Toto", email: "toto@gmail.com"})
+CREATE (p:Persona {nombre: "Jesus", apellido: "Nazareth", email: "jesusnumero1@gmail.com", telefono: 123, edad: 50})
+
+#Modificacion:
+MATCH (nodo1: Persona {email: "toto@gmail.com"})
+SET nodo1: Alien, nodo1.email= "toto.alien@gmail.com"
+RETURN nodo1
+
+#Eliminacion:
+MATCH (nodo1: Persona {email: "toto.alien@gmail.com"})
+REMOVE nodo1.apellido
+RETURN nodo1
+
+#Agregado
+MATCH (nodo1: Persona {email: "toto.alien@gmail.com"})
+SET nodo1 += {edad: 23}
+RETURN nodo1
+
+#Consultas con funciones de agregado
+MATCH (nodos: Persona)
+RETURN SUM(nodos.edad)
+
+MATCH (nodos: Persona)
+RETURN AVG(nodos.edad)
+
+MATCH (nodos: Persona)
+RETURN MIN(nodos.edad)
+
+MATCH (nodos: Persona)
+RETURN MAX(nodos.edad)
+
+
+##### En resumen #####
+
+•Nodos: Representan las entidades de nuestro modelo.
+•Etiquetas: Agrupan Nodos por Roles.
+•Relaciones: Conectan entidades, le dan estructura al dominio.
+•Propiedades: Son atributos de las entidades, cualidades de las relaciones y/o metadata.
+
+
+
+
+
+
+Kahoot Preguntas:
+
+1- Marcar la incorrecta:
+Las relaciones pueden tener varios tipos
+
+2- Que lenguaje de consulta usa Neo4J?:
+Cypher que es similar a SQL pero no tiene la misma estructura ni nomenclatura.
+No se invento para Neo4J, si no que se adapto para este. No es propio de Neo4J.
+
+3- Para que caso usamos la notacion "PascalCase" dentro de Neo4J:
+Para las Etiquetas/Labels
+
+4- Las relaciones, al ser direccionadas, solo pueden recorrerse en el sentido de su direccion:
+Falso: Pueden ser direccionadas pero no es obligatorio seguir esa direccion
