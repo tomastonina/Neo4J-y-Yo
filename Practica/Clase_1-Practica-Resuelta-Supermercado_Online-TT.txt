@@ -1,8 +1,201 @@
-#Nodos:
-#Etiquetas: 
-- Personas
-- Productos
-- FabricantesDeProductos
+##### ENUNCIADO #####
 
-#Relaciones: 
-- Algunos Nodos Personas se pueden conocer entre ellos
+Un supermercado online desea tener un sistema en el que se encuentre cargada toda la
+información necesaria para dar recomendaciones de productos a sus clientes y realizar otras
+consultas de análisis de datos.
+
+Las personas tienen un id y de ellas se conocen su nombre y apellido. Algunas personas pueden
+conocer también a otras personas.
+También existen los productos, y fabricantes de productos. Los productos podrán ser agrupados
+en categorías. De todo lo que sea modelado como entidad tendrá un nombre y un id numérico.
+
+En base a esta información armar el modelado del grafo, decidiendo cómo almacenar la
+información disponible entre entidades, relaciones, propiedades y tipos para que tenga un sentido
+práctico, pudiendo en un futuro realizar recomendaciones de productos a clientes similares y que
+permita resolver las siguientes consultas:
+
+### Nodos: 
+- 15
+### Etiquetas: 
+- Persona
+- Producto
+- Fabricante
+- Categoria
+- Review
+### Relaciones: 
+- Personas conocen Personas
+- Personas compran Productos
+- Los fabricantes crean los productos
+- Productos tienen Reviews
+- Productos tienen categorias
+- Persona Ve producto (No compra)
+
+Para ver TODO:
+MATCH (nodos1)-[relacion1]->(nodos2)
+RETURN nodos1, relacion1, nodos2
+
+##### EJERCICIOS #####
+
+# 1. Listar todos los productos con su nombre.
+MATCH (nodos_producto: Producto)
+RETURN nodos_producto
+
+# 2. Listar los productos (id y nombre) de la categoría con nombre “Deporte”.
+MATCH (nodos_prod_deporte: Producto) - [relacion: PERTENECE] -> (nodo_categoria: Categoria {descripcion: "Deporte"})
+RETURN nodos_prod_deporte.nombre, nodos_prod_deporte.id
+
+# 3. Listar las personas que compraron algún producto con id 1.
+MATCH (nodos_persona: Persona) - [relacion: COMPRO] -> (nodos_producto: Producto {id: 1})
+RETURN nodos_persona
+
+# 4. Listar productos comprados por una persona de nombre Agustín.
+MATCH (nodos_persona: Persona {nombre: "Agustin"}) - [relacion: COMPRO] -> (nodos_producto: Producto)
+RETURN nodos_producto
+
+# 5. Listar todas las personas con sus productos comprados y el nombre de su fabricante
+MATCH (nodos_persona: Persona) - [relacion_persona: COMPRO] -> (nodos_producto: Producto) <- [relacion_fabricante: FABRICA] - (nodos_fabricante: Fabricante)
+RETURN nodos_persona.nombre, nodos_producto.nombre, nodos_fabricante.nombre
+
+# 6. Listar todas las vistas que tuvieron los productos junto con el nombre y apellido de la persona que los vio.
+MATCH (nodos_persona: Persona) - [relacion_persona_producto: VIO] -> (nodos_producto: Producto) - [relacion_producto_review: TIENE] -> (nodos_review: Review)
+RETURN nodos_review.ranking as Vistas_del_producto, nodos_persona.nombre, nodos_persona.apellido
+
+# 7. Listar todos los productos cuyas review tienen un ranking mayor a 3.
+MATCH (nodos_producto: Producto) - [relacion_producto_review: TIENE] -> (nodos_review: Review)
+WHERE nodos_review.ranking > 3
+RETURN nodos_producto
+
+# 8. Realizar una recomendación a Gonzalo de un producto a comprar. La recomendación
+# debe ser un producto que haya sido comprado por otras personas que compraron algún producto que compro Gonzalo).
+MATCH (persona_gonzalo: Persona {nombre: "Gonzalo"}) - [relacion_gonzalo_compra: COMPRO] -> (producto_gonzalo: Producto)
+MATCH (nodo_personas: Persona) - [relacion_personas_compra: COMPRO] -> (producto_gonzalo)
+MATCH (nodos_personas) - [relacion_compra: COMPRO] -> (producto_recomendado: Producto)
+WHERE NOT (persona_gonzalo) - [: COMPRO] -> (producto_recomendado)
+RETURN producto_recomendado
+
+# Bonus: Ordenar descendentemente los productos recomendados por un score. El score
+# es la cantidad de personas que compran el producto que compró Gonzalo y el producto recomendado.
+
+# 9. Listar posibles amigos de Maria, es decir personas a las que los conocidos de Maria conocen
+MATCH (nodo_persona_maria: Persona {nombre: "Maria"}) - [relacion_personas: CONOCE] -> (nodo_personas_2: Persona)
+MATCH (nodo_personas_2) - [relacion_personas_todas: CONOCE] -> (posibles_amigos: Persona)
+RETURN posibles_amigos
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##### CREACION DEL GRAFO ####
+
+CREATE (p:Persona {nombre: 'Antonio', apellido: 'Margheriti'});
+
+CREATE (p:Persona {nombre: 'Maria', apellido: 'Bentu'});
+
+CREATE (p:Persona {nombre: 'Agustin', apellido: 'Lopez'});
+
+CREATE (p:Persona {nombre: 'Jose', apellido: 'Garcia'});
+
+CREATE (p:Persona {nombre: 'Carolina', apellido: 'Lamitri'});
+
+CREATE (p:Persona {nombre: 'Gonzalo', apellido: 'Pini'});
+
+CREATE (f:Fabricante {nombre: 'Plastic SA'});
+
+CREATE (c:Categoria {descripcion: 'Deporte'});
+
+CREATE (p:Producto {id: 1, nombre: 'Zapatillas'});
+
+CREATE (p:Producto {id: 2, nombre: 'Pelota de futbol'});
+
+CREATE (p:Producto {id: 3, nombre: 'Raqueta'});
+
+CREATE (p:Producto {id: 4, nombre: 'Arco'});
+
+CREATE (r:Review {id: 1, ranking: 5});
+
+CREATE (r:Review {id: 2, ranking: 4});
+
+CREATE (r:Review {id: 3, ranking: 2});
+
+MATCH (p:Producto {id: 1}), (c:Categoria {descripcion: 'Deporte'})
+CREATE (p)-[r:PERTENECE]->(c);
+
+MATCH (pe:Persona {nombre: 'Jose'}), (pr:Producto {id: 1})
+CREATE (pe)-[r:COMPRO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Jose'}), (pr:Producto {id: 2})
+CREATE (pe)-[r:VIO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Agustin'}), (pr:Producto {id: 1})
+CREATE (pe)-[r:VIO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Maria'}), (pr:Producto {id: 3})
+CREATE (pe)-[r:VIO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Maria'}), (pr:Producto {id: 1})
+CREATE (pe)-[r:VIO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Agustin'}), (pr:Producto {id: 2})
+CREATE (pe)-[r:COMPRO]->(pr);
+
+MATCH (p:Producto {id: 1}), (f:Fabricante {nombre: 'Plastic SA'})
+CREATE (p)<-[r:FABRICA]-(f);
+
+MATCH (p:Producto {id: 3}), (f:Fabricante {nombre: 'Plastic SA'})
+CREATE (p)<-[r:FABRICA]-(f);
+
+MATCH (pe:Persona {nombre: 'Jose'}), (pr:Producto {id: 3})
+CREATE (pe)-[r:COMPRO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Maria'}), (pr:Producto {id: 3})
+CREATE (pe)-[r:COMPRO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Maria'}), (pr:Producto {id: 1})
+CREATE (pe)-[r:COMPRO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Agustin'}), (pr:Producto {id: 1})
+CREATE (pe)-[r:COMPRO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Gonzalo'}), (pr:Producto {id: 1})
+CREATE (pe)-[r:COMPRO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Carolina'}), (pr:Producto {id: 4})
+CREATE (pe)-[r:COMPRO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Carolina'}), (pr:Producto {id: 2})
+CREATE (pe)-[r:COMPRO]->(pr);
+
+MATCH (pe:Persona {nombre: 'Carolina'}), (pr:Producto {id: 3})
+CREATE (pe)-[r:COMPRO]->(pr);
+
+MATCH (p:Producto {id: 3}), (r:Review {ranking: 5})
+CREATE (p)-[rel:TIENE]->(r);
+
+MATCH (p:Producto {id: 2}), (r:Review {ranking: 4})
+CREATE (p)-[rel:TIENE]->(r);
+
+MATCH (p:Producto {id: 1}), (r:Review {ranking: 2})
+CREATE (p)-[rel:TIENE]->(r);
+
+MATCH (p:Persona {nombre: "Maria"}), (p2:Persona {nombre: "Carolina"})
+CREATE (p)-[rel:CONOCE]->(p2);
+
+MATCH (p:Persona {nombre: "Carolina"}), (p2:Persona {nombre: "Gonzalo"})
+CREATE (p)-[rel:CONOCE]->(p2);
+
+MATCH (p:Persona {nombre: "Gonzalo"}), (p2:Persona {nombre: "Agustin"})
+CREATE (p)-[rel:CONOCE]->(p2);
+
+MATCH (p:Persona {nombre: "Maria"}), (p2:Persona {nombre: "Jose"})
+CREATE (p)-[rel:CONOCE]->(p2);
